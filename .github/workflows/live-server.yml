@@ -28,22 +28,18 @@ jobs:
           ls build/libs/*.jar
           echo "Build artifact present, continuing."
 
-      - name: Download Paper 1.21.x
+      - name: Download Paper-fork server jar (proven GitHub release)
         run: |
           set -e
-          API=https://fill.papermc.io/v3/projects/paper
-          VER=$(curl -sL "$API/versions" \
-            | jq -r '.versions[] | select(.version.id | startswith("1.21")) | select(.version.id | contains("-") | not) | .version.id' \
-            | sort -V | tail -1)
-          echo "Version: $VER"
-          JSON=$(curl -sL "$API/versions/$VER/builds")
-          BUILD=$(echo "$JSON" | jq -r '[.[] | select(.channel=="STABLE")] | last | .id')
-          NAME=$(echo "$JSON" | jq -r '[.[] | select(.channel=="STABLE")] | last | .downloads | (.["server:default"].name // keys[0])')
-          echo "Build: $BUILD File: $NAME"
-          curl -fSL -o paper.jar "$API/versions/$VER/builds/$BUILD/downloads/$NAME"
+          TAG=$(gh api repos/LeavesMC/Leaves/releases/latest --jq '.tag_name')
+          echo "Leaves release: $TAG"
+          gh release download "$TAG" --repo LeavesMC/Leaves \
+            --pattern "leaves-*.jar" --clobber --output paper.jar
           SIZE=$(stat -c%s paper.jar)
           echo "paper.jar bytes: $SIZE"
           [ "$SIZE" -gt 10000000 ] || (echo "download looks wrong"; exit 1)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up server
         run: |
