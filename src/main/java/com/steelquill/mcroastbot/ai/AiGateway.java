@@ -13,7 +13,8 @@ import java.util.Map;
  * OpenAI-compatible gateway client with key rotation + provider failover.
  * Network only happens here. Call from async threads, never the main thread.
  */
-public final class AiGateway {
+/** Non-final so tests/operators can subclass (e.g. canned or logging gateway). */
+public class AiGateway {
     public record CompletionResult(boolean ok, String text, String providerId,
                                    boolean retryable, String error) {
     }

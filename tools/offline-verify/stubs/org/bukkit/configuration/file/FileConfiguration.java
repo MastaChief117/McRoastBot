@@ -28,7 +28,7 @@ public class FileConfiguration extends ConfigurationSection {
     }
 
     public List<String> getStringList(String path) {
-        return null;
+        return List.of();
     }
 
     public boolean isConfigurationSection(String path) {

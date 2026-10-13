@@ -8,7 +8,12 @@ Gradle build is impossible here. Instead:
   event, death event, broadcast, materials, entity types) were verified against
   PaperMC/Paper GitHub source; the rest are long-stable APIs.
 - `VerifyMain.java` executes the Bukkit-free logic (cooldowns, diary,
-  validator, payload, keystore AES, counters, bounties, prompts).
+  validator, payload, keystore AES, counters, bounties, prompts): 47 checks.
+- `IntegrationTest.java` drives the REAL listeners -> dispatcher -> validator
+  -> diary -> broadcast path with fake players/events, an inline scheduler,
+  and a canned AI gateway: 17 checks (craft threshold, opt-out, mentions,
+  OP-gated keys, murder bounty + caps, bounty claim, dimension, milk
+  backpressure).
 
 Run (needs only JDK 21):
 
@@ -19,7 +24,23 @@ rm -rf /tmp/mcverify-classes && mkdir -p /tmp/mcverify-classes
 find src/main/java tools/offline-verify -name '*.java' > /tmp/mcsrc.txt
 javac -encoding UTF-8 -d /tmp/mcverify-classes @/tmp/mcsrc.txt
 java -cp /tmp/mcverify-classes verify.VerifyMain
+java -cp /tmp/mcverify-classes verify.IntegrationTest
 ```
+
+Assemble the shippable jar offline (plugin classes + resources, no stubs):
+
+```
+rm -rf /tmp/jarclasses && mkdir -p /tmp/jarclasses
+find src/main/java -name '*.java' > /tmp/pluginsrc.txt
+javac -encoding UTF-8 -implicit:none \
+  --source-path tools/offline-verify/stubs -d /tmp/jarclasses @/tmp/pluginsrc.txt
+cp -r src/main/resources/* /tmp/jarclasses/
+(cd /tmp/jarclasses && jar cf /tmp/McRoastBot-0.1.0.jar .)
+jar tf /tmp/McRoastBot-0.1.0.jar | grep -c -E '^(org|net|io)/' # expect 0
+```
+
+This jar is structurally complete but compiled against APPROXIMATE stubs, so
+it is a packaging check, not a shippable artifact.
 
 The REAL build must run where Paper's repo is reachable (Lightning AI box):
 see project README.

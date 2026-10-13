@@ -5,7 +5,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
 public abstract class PlayerEvent extends Event {
-    public final Player getPlayer() {
+    public Player getPlayer() {
         return null;
     }
 }

@@ -1,17 +1,12 @@
 package com.steelquill.mcroastbot.chat;
 
-import com.steelquill.mcroastbot.ai.AiGateway;
-import com.steelquill.mcroastbot.ai.KeyStore;
-import com.steelquill.mcroastbot.ai.Providers;
 import com.steelquill.mcroastbot.ai.AiProvider;
-import com.steelquill.mcroastbot.ai.RotationMode;
+import com.steelquill.mcroastbot.ai.KeyStore;
 import com.steelquill.mcroastbot.config.BotConfig;
 import com.steelquill.mcroastbot.core.CooldownManager;
 import com.steelquill.mcroastbot.core.EventType;
 import com.steelquill.mcroastbot.core.Observation;
 import com.steelquill.mcroastbot.core.PromptBuilder;
-import com.steelquill.mcroastbot.detect.BountyManager;
-import com.steelquill.mcroastbot.core.RoastDiary;
 import com.steelquill.mcroastbot.observe.ObserveGatherer;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import java.util.Locale;
