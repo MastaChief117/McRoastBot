@@ -166,7 +166,7 @@ public class McRoastBotPlugin extends JavaPlugin {
                 String clean = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1)
                         : baseUrl;
                 providers.put("keyparty",
-                        new AiProvider("keyparty", "KeyParty", clean, true, false));
+                        new AiProvider("keyparty", "KeyParty", clean, true, false, "/chat/completions"));
                 String msg = ChatListener.doAddKey(keys, providers, "keyparty", rawKey);
                 saveKeysFile();
                 return msg + " Gateway: " + clean;
@@ -280,7 +280,7 @@ public class McRoastBotPlugin extends JavaPlugin {
         YamlConfiguration y = YamlConfiguration.loadConfiguration(f);
         String kpUrl = y.getString("keyparty-url", "");
         if (!kpUrl.isBlank()) {
-            providers.put("keyparty", new AiProvider("keyparty", "KeyParty", kpUrl, true, false));
+            providers.put("keyparty", new AiProvider("keyparty", "KeyParty", kpUrl, true, false, "/chat/completions"));
         }
         List<Map<?, ?>> list = y.getMapList("keys");
         for (Map<?, ?> m : list) {

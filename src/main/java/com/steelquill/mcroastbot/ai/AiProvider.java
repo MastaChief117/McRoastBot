@@ -9,9 +9,10 @@ public record AiProvider(
         String displayName,
         String baseUrl,
         boolean openAiCompatible,
-        boolean keyless) {
+        boolean keyless,
+        String completionsPath) {
     public String completionsUrl() {
         String b = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
-        return b + "/chat/completions";
+        return b + completionsPath;
     }
 }

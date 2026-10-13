@@ -172,7 +172,7 @@ public final class VerifyMain {
         AiProvider pol = provs.get("pollinations");
         check(pol != null && pol.keyless() && pol.openAiCompatible(), "pollinations-keyless");
         check(pol != null && pol.completionsUrl()
-                .equals("https://text.pollinations.ai/openai/chat/completions"),
+                .equals("https://text.pollinations.ai/openai"),
                 "pollinations-url");
         String keylessMsg = ChatListener.doAddKey(ks, provs, "pollinations", "whatever");
         check(keylessMsg.contains("needs no key") && ks.enabledCount("pollinations") == 0,
