@@ -43,6 +43,23 @@ public final class RoastDispatcher {
     }
 
     /**
+     * OP-only self-test path (spec test mode): feeds a canned reply through
+     * validation -> diary -> broadcast without spending an AI request.
+     * Broadcast hops to the main thread like every other chat output.
+     */
+    public void roastCanned(UUID playerId, EventType type, String detail,
+                            String observationCompact, String canned) {
+        List<String> recent = diary.recent(playerId);
+        ResponseValidator.Result v = validator.validate(canned, recent, type.allCaps());
+        if (!v.ok()) {
+            chat.plugin().getLogger().info("McRoastBot aitest discarded: " + v.reason());
+            return;
+        }
+        diary.add(playerId, v.text());
+        String out = v.text();
+        Bukkit.getScheduler().runTask(chat.plugin(), () -> chat.broadcast(out));
+    }
+    /**
      * Checks per-player + global cooldowns and fires the AI request.
      * Milk-brb fallback is sent when the global cooldown blocks an event.
      */

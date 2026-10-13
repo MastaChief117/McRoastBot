@@ -40,8 +40,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 /**
  * McRoastBot: chat-only AI roast bot. The bot NEVER gets OP and NEVER touches
  * the world - it only broadcasts cyan chat messages.
+ * Non-final so test harnesses can boot it against a fake server.
  */
-public final class McRoastBotPlugin extends JavaPlugin {
+public class McRoastBotPlugin extends JavaPlugin {
     private BotConfig cfg;
     private KeyStore keys;
     private final Map<String, AiProvider> providers = new LinkedHashMap<>();

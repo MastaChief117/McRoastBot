@@ -14,17 +14,27 @@ Gradle build is impossible here. Instead:
   and a canned AI gateway: 17 checks (craft threshold, opt-out, mentions,
   OP-gated keys, murder bounty + caps, bounty claim, dimension, milk
   backpressure).
+- `ServerTest.java` boots the REAL `McRoastBotPlugin` against a fake server:
+  real `config.yml`, real `system-prompt.txt`, SnakeYAML-backed persistence,
+  14 checks (boot, keyadd, aitest pipeline, graceful AI failure, file saves
+  with no plaintext secrets, cross-reboot restore of keys/diary/name).
 
-Run (needs only JDK 21):
+Run (needs only JDK 21 + SnakeYAML, fetched once from Maven Central):
 
 ```
 export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
 export PATH=$JAVA_HOME/bin:$PATH
+mkdir -p tools/offline-verify/lib
+curl -sL -o tools/offline-verify/lib/snakeyaml-2.2.jar \
+  https://repo.maven.apache.org/maven2/org/yaml/snakeyaml/2.2/snakeyaml-2.2.jar
 rm -rf /tmp/mcverify-classes && mkdir -p /tmp/mcverify-classes
 find src/main/java tools/offline-verify -name '*.java' > /tmp/mcsrc.txt
-javac -encoding UTF-8 -d /tmp/mcverify-classes @/tmp/mcsrc.txt
-java -cp /tmp/mcverify-classes verify.VerifyMain
-java -cp /tmp/mcverify-classes verify.IntegrationTest
+javac -encoding UTF-8 -cp tools/offline-verify/lib/snakeyaml-2.2.jar \
+  -d /tmp/mcverify-classes @/tmp/mcsrc.txt
+CP=/tmp/mcverify-classes:tools/offline-verify/lib/snakeyaml-2.2.jar
+java -cp $CP verify.VerifyMain
+java -cp $CP verify.IntegrationTest
+java -cp $CP verify.ServerTest
 ```
 
 Assemble the shippable jar offline (plugin classes + resources, no stubs):

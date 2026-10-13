@@ -34,6 +34,7 @@ public final class BotConfig {
     public final long bountyAmount;
     public final Set<String> rareBiomes;
     public final List<String> blockedPatterns;
+    public final String debugCannedReply;
 
     public BotConfig(FileConfiguration c) {
         model = c.getString("bot.model", "gpt-4o-mini");
@@ -66,5 +67,6 @@ public final class BotConfig {
         bountyAmount = c.getLong("bounty-amount", 10000);
         rareBiomes = new HashSet<>(c.getStringList("rare-biomes"));
         blockedPatterns = c.getStringList("blocked-patterns");
+        debugCannedReply = c.getString("debug-canned-reply", "");
     }
 }

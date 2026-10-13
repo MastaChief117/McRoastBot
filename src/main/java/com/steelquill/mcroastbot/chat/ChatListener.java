@@ -137,6 +137,29 @@ public final class ChatListener implements Listener {
                 }
                 p.sendMessage(admin.status());
             }
+            case "!aitest" -> {
+                // OP-only pipeline self-test (spec test mode). Disabled by default.
+                if (!p.isOp()) {
+                    return;
+                }
+                if (cfg.debugCannedReply == null || cfg.debugCannedReply.isBlank()) {
+                    p.sendMessage("Test mode disabled (debug-canned-reply is empty).");
+                    return;
+                }
+                EventType t = EventType.MENTION;
+                if (parts.length >= 2) {
+                    try {
+                        t = EventType.valueOf(parts[1].toUpperCase(Locale.ROOT));
+                    } catch (IllegalArgumentException ignored) {
+                        p.sendMessage("Usage: !aitest [mention|craft|murder|bounty|dimension|random]");
+                        return;
+                    }
+                }
+                Observation ob = ObserveGatherer.basic(p);
+                dispatcher.roastCanned(p.getUniqueId(), t, "self-test", ob.toCompact(),
+                        cfg.debugCannedReply);
+                p.sendMessage("aitest fired (" + t.name() + ").");
+            }
             default -> {
                 // Unknown !-message: leave cancelled, stay silent to avoid noise.
             }

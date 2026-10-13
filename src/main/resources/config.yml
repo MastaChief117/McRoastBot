@@ -41,6 +41,11 @@ bounty-amount: 10000
 # Biomes that trigger a DIMENSION roast when entered (lowercase biome keys).
 rare-biomes: [mushroom_fields, deep_dark, cherry_grove, pale_garden, the_void, soul_sand_valley]
 
+# OP-only pipeline self-test (spec test mode). Empty = disabled.
+# When set, OPs can run `!aitest [mention|craft|murder|bounty|dimension|random]`
+# to push a canned reply through validation -> diary -> chat.
+debug-canned-reply: ""
+
 # Extra blocked regexes (case-insensitive) on top of built-ins. Full keys, links
 # and self-harm encouragement are always blocked and can never be allow-listed.
 blocked-patterns: []
