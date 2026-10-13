@@ -25,14 +25,15 @@ jobs:
       - name: Download Paper 1.21.x
         run: |
           set -e
-          VER=$(curl -sL https://fill.papermc.io/v3/projects/paper/versions \
-            | jq -r '.versions[] | select(startswith("1.21"))' | sort -V | tail -1)
+          API=https://api.papermc.io/v2/projects/paper
+          VER=$(curl -sL "$API" | jq -r '.versions[] | select(startswith("1.21"))' \
+            | sort -V | tail -1)
+          [ -n "$VER" ] && [ "$VER" != "null" ] || VER=1.21.4
           echo "Version: $VER"
-          BUILD=$(curl -sL "https://fill.papermc.io/v3/projects/paper/versions/$VER/builds" \
-            | jq -r '.builds[-1].id')
+          BUILD=$(curl -sL "$API/versions/$VER/builds" | jq -r '.builds[-1].build')
           echo "Build: $BUILD"
           curl -fSL -o paper.jar \
-            "https://fill.papermc.io/v3/projects/paper/versions/$VER/builds/$BUILD/downloads/paper-$VER-$BUILD.jar"
+            "$API/versions/$VER/builds/$BUILD/downloads/paper-$VER-$BUILD.jar"
           SIZE=$(stat -c%s paper.jar)
           echo "paper.jar bytes: $SIZE"
           [ "$SIZE" -gt 10000000 ] || (echo "download looks wrong"; exit 1)
