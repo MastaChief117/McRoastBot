@@ -20,6 +20,21 @@ repositories {
             includeGroup 'io.papermc.paper'
         }
     }
+    // Paper-API transitives that are NOT on Maven Central.
+    maven {
+        name = 'mojang'
+        url = 'https://libraries.minecraft.net/'
+        content {
+            includeGroupByRegex 'com\\.mojang.*'
+        }
+    }
+    maven {
+        name = 'spigot'
+        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+        content {
+            includeGroup 'net.md-5'
+        }
+    }
 }
 
 dependencies {
