@@ -45,6 +45,7 @@ jobs:
         run: |
           set -e
           mkdir -p live/plugins
+          mv paper.jar live/paper.jar
           cp build/libs/*.jar live/plugins/
           ls live/plugins/
           cd live
