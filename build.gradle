@@ -35,6 +35,20 @@ repositories {
             includeGroup 'net.md-5'
         }
     }
+    maven {
+        name = 'spigot-public'
+        url = 'https://hub.spigotmc.org/nexus/content/repositories/public/'
+        content {
+            includeGroup 'net.md-5'
+        }
+    }
+    maven {
+        name = 'sonatype-snapshots'
+        url = 'https://oss.sonatype.org/content/repositories/snapshots/'
+        content {
+            includeGroup 'net.md-5'
+        }
+    }
 }
 
 dependencies {
