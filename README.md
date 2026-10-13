@@ -41,7 +41,9 @@ cross-checked against PaperMC/Paper GitHub source).
 1. Paper 1.21.x server, Java 21. Drop the jar in `plugins/`.
 2. Optional: ViaVersion + ViaBackwards (old/new Java clients), Geyser +
    Floodgate (Bedrock, Phase 2 - untested, see roadmap in spec).
-3. Start once to generate `config.yml`, then OP-only in-game setup:
+3. Start once to generate `config.yml`. The bot works with **zero setup**:
+   Pollinations (free, keyless) is the default first provider. Optional
+   OP-only upgrades in-game:
    - `!keyadd nvidia <key>` (also `groq`, `openai`, `gemini`, `deepseek`,
      `together`, `openrouter`, `fireworks`, `mistral`)
    - `!apikeyparty <base-url> <key>` (KeyParty gateway, OpenAI-compatible)

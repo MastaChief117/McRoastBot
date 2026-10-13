@@ -146,7 +146,7 @@ public class McRoastBotPlugin extends JavaPlugin {
                 String clean = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1)
                         : baseUrl;
                 providers.put("keyparty",
-                        new AiProvider("keyparty", "KeyParty", clean, true));
+                        new AiProvider("keyparty", "KeyParty", clean, true, false));
                 String msg = ChatListener.doAddKey(keys, providers, "keyparty", rawKey);
                 saveKeysFile();
                 return msg + " Gateway: " + clean;
@@ -168,7 +168,7 @@ public class McRoastBotPlugin extends JavaPlugin {
             public String rotationStatus() {
                 StringBuilder sb = new StringBuilder("Rotation: " + rotationMode + ". ");
                 for (String id : providers.keySet()) {
-                    sb.append(id).append('=').append(keys.enabledCount(id)).append(' ');
+                    sb.append(id).append('=').append(keyDesc(id)).append(' ');
                 }
                 return sb.toString().strip();
             }
@@ -190,12 +190,20 @@ public class McRoastBotPlugin extends JavaPlugin {
                 StringBuilder sb = new StringBuilder(
                         "McRoastBot @" + botName + " keys: ");
                 for (String id : providers.keySet()) {
-                    sb.append(id).append('=').append(keys.enabledCount(id)).append(' ');
+                    sb.append(id).append('=').append(keyDesc(id)).append(' ');
                 }
                 sb.append("| diary players=").append(diary.playerCount());
                 return sb.toString();
             }
         };
+    }
+
+    private String keyDesc(String providerId) {
+        AiProvider p = providers.get(providerId);
+        if (p != null && p.keyless()) {
+            return "free";
+        }
+        return String.valueOf(keys.enabledCount(providerId));
     }
 
     // ---------- persistence (server-side files, 600 where secret) ----------
@@ -249,7 +257,7 @@ public class McRoastBotPlugin extends JavaPlugin {
         YamlConfiguration y = YamlConfiguration.loadConfiguration(f);
         String kpUrl = y.getString("keyparty-url", "");
         if (!kpUrl.isBlank()) {
-            providers.put("keyparty", new AiProvider("keyparty", "KeyParty", kpUrl, true));
+            providers.put("keyparty", new AiProvider("keyparty", "KeyParty", kpUrl, true, false));
         }
         List<Map<?, ?>> list = y.getMapList("keys");
         for (Map<?, ?> m : list) {
@@ -348,7 +356,7 @@ public class McRoastBotPlugin extends JavaPlugin {
     private void logKeySummary() {
         StringBuilder sb = new StringBuilder("AI keys: ");
         for (Map.Entry<String, AiProvider> e : providers.entrySet()) {
-            sb.append(e.getKey()).append('=').append(keys.enabledCount(e.getKey())).append(' ');
+            sb.append(e.getKey()).append('=').append(keyDesc(e.getKey())).append(' ');
         }
         getLogger().info(sb.toString().strip());
     }

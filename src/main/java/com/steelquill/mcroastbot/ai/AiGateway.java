@@ -57,31 +57,34 @@ public class AiGateway {
             if (p == null || !p.openAiCompatible()) {
                 continue;
             }
-            // Try each key of this provider once per pass.
+            // Keyless providers (Pollinations free tier) always get one attempt.
             for (int k = 0; k < Math.max(1, keys.enabledCount(providerId)); k++) {
                 if (attempts >= maxAttempts) {
                     return new CompletionResult(false, "", "", true, lastError);
                 }
                 attempts++;
                 KeyStore.Entry e = keys.next(providerId);
-                if (e == null) {
-                    break;
-                }
-                String raw;
-                try {
-                    raw = keys.decrypt(e);
-                } catch (Exception ex) {
-                    lastError = "decrypt-failed:" + providerId;
-                    continue;
+                String raw = null;
+                if (e != null) {
+                    try {
+                        raw = keys.decrypt(e);
+                    } catch (Exception ex) {
+                        lastError = "decrypt-failed:" + providerId;
+                        continue;
+                    }
+                } else if (!p.keyless()) {
+                    break; // No keys and not keyless: skip provider.
                 }
                 String model = providerModels.getOrDefault(providerId, defaultModel);
                 try {
-                    HttpRequest req = HttpRequest.newBuilder()
+                    HttpRequest.Builder builder = HttpRequest.newBuilder()
                             .uri(URI.create(p.completionsUrl()))
                             .timeout(Duration.ofSeconds(Math.max(5, timeoutSeconds)))
-                            .header("Content-Type", "application/json")
-                            .header("Authorization", "Bearer " + raw)
-                            .POST(HttpRequest.BodyPublishers.ofString(
+                            .header("Content-Type", "application/json");
+                    if (raw != null) {
+                        builder.header("Authorization", "Bearer " + raw);
+                    }
+                    HttpRequest req = builder.POST(HttpRequest.BodyPublishers.ofString(
                                     ChatPayload.buildRequest(model, system, user, temperature, maxTokens)))
                             .build();
                     HttpResponse<String> res = http.send(req, HttpResponse.BodyHandlers.ofString());
@@ -95,11 +98,15 @@ public class AiGateway {
                             }
                         }
                         case DISABLE_KEY -> {
-                            keys.markInvalid(e.id());
+                            if (e != null) {
+                                keys.markInvalid(e.id());
+                            }
                             lastError = "invalid-key:" + providerId;
                         }
                         case ROTATE_NEXT -> {
-                            keys.markTransientFailure(e.id());
+                            if (e != null) {
+                                keys.markTransientFailure(e.id());
+                            }
                             lastError = "transient:" + providerId + ":" + res.statusCode();
                         }
                         case FATAL -> {
@@ -108,7 +115,9 @@ public class AiGateway {
                         }
                     }
                 } catch (Exception ex) {
-                    keys.markTransientFailure(e.id());
+                    if (e != null) {
+                        keys.markTransientFailure(e.id());
+                    }
                     lastError = "io-error:" + providerId;
                 }
             }

@@ -167,6 +167,15 @@ public final class ServerTest {
         Bukkit.scheduler = new InlineScheduler();
         Bukkit.online = new ArrayList<>();
 
+        // Shipped config conformance: free provider first, correct default model.
+        YamlConfiguration shipped = YamlConfiguration.loadConfiguration(
+                new File("/root/mcroastbot/src/main/resources/config.yml"));
+        check(shipped.getStringList("providers-preferred-order").get(0).equals("pollinations"),
+                "config-pollinations-first");
+        check(shipped.getConfigurationSection("bot.provider-models") != null
+                && "openai".equals(shipped.getString("bot.provider-models.pollinations", "")),
+                "config-pollinations-model");
+
         File data = new File("/tmp/mcplugin-test");
         deleteRec(data);
         data.mkdirs();
@@ -239,6 +248,7 @@ public final class ServerTest {
         chat2.onChat(new IntegrationTest.FakeChat(op2));
         check(op2.sent.get(0).contains("nvidia=1") && op2.sent.get(0).contains("@RoastLord"),
                 "console-keys-and-name-restored");
+        check(op2.sent.get(0).contains("pollinations=free"), "console-pollinations-free");
         // Diary survived: same roast would now be rejected as repeat, so the
         // validator path is exercised - fire a different canned event instead.
         PlainTextComponentSerializer.next = "!aitest mention";

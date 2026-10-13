@@ -177,6 +177,9 @@ public final class ChatListener implements Listener {
             return prov.displayName() + " has no OpenAI-compatible endpoint in this version; "
                     + "use it via KeyParty (!apikeyparty) instead.";
         }
+        if (prov.keyless()) {
+            return prov.displayName() + " is free and needs no key - already active.";
+        }
         if (rawKey == null || rawKey.length() < 8) {
             return "That key looks too short; not stored.";
         }

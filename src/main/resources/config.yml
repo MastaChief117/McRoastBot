@@ -9,10 +9,12 @@ bot:
   max-tokens: 120
   http-timeout-seconds: 20
   # Optional per-provider model override, e.g. { nvidia: "meta/llama-3.1-70b-instruct" }
-  provider-models: {}
+  # Pollinations default model is its "openai" router.
+  provider-models: {pollinations: openai}
 
 # Preferred provider order for FAILOVER_PREFERRED mode.
-providers-preferred-order: [keyparty, groq, nvidia, gemini, deepseek, openai, together, openrouter, fireworks, mistral]
+# Pollinations is free and keyless, so it leads by default.
+providers-preferred-order: [pollinations, keyparty, groq, nvidia, gemini, deepseek, openai, together, openrouter, fireworks, mistral]
 
 key-rotation: ROUND_ROBIN # ROUND_ROBIN | FAILOVER_PREFERRED
 key-max-attempts: 4

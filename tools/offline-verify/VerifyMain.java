@@ -1,7 +1,10 @@
 package verify;
 
 import com.steelquill.mcroastbot.ai.ChatPayload;
+import com.steelquill.mcroastbot.ai.AiProvider;
 import com.steelquill.mcroastbot.ai.KeyStore;
+import com.steelquill.mcroastbot.ai.Providers;
+import com.steelquill.mcroastbot.chat.ChatListener;
 import com.steelquill.mcroastbot.core.CooldownManager;
 import com.steelquill.mcroastbot.core.EventType;
 import com.steelquill.mcroastbot.core.Observation;
@@ -11,6 +14,7 @@ import com.steelquill.mcroastbot.core.RoastDiary;
 import com.steelquill.mcroastbot.detect.BountyManager;
 import com.steelquill.mcroastbot.detect.CraftCounter;
 import com.steelquill.mcroastbot.detect.KillTracker;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -159,6 +163,20 @@ public final class VerifyMain {
         // EventType caps
         check(EventType.MURDER.allCaps() && EventType.BOUNTY.allCaps()
                 && !EventType.MENTION.allCaps(), "eventtype-caps");
+
+        // Pollinations free provider
+        Map<String, AiProvider> provs = new LinkedHashMap<>();
+        for (AiProvider p : Providers.defaults()) {
+            provs.put(p.id(), p);
+        }
+        AiProvider pol = provs.get("pollinations");
+        check(pol != null && pol.keyless() && pol.openAiCompatible(), "pollinations-keyless");
+        check(pol != null && pol.completionsUrl()
+                .equals("https://text.pollinations.ai/openai/chat/completions"),
+                "pollinations-url");
+        String keylessMsg = ChatListener.doAddKey(ks, provs, "pollinations", "whatever");
+        check(keylessMsg.contains("needs no key") && ks.enabledCount("pollinations") == 0,
+                "pollinations-no-key-stored");
 
         System.out.println("\nPASS=" + pass + " FAIL=" + fail);
         if (fail > 0) {
