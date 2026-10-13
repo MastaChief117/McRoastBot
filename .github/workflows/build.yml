@@ -1,0 +1,40 @@
+name: build
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Real build against Paper API
+        run: gradle build
+
+      - name: Offline self-tests (unit + integration + server boot)
+        run: |
+          mkdir -p tools/offline-verify/lib
+          curl -sL -o tools/offline-verify/lib/snakeyaml-2.2.jar \
+            https://repo.maven.apache.org/maven2/org/yaml/snakeyaml/2.2/snakeyaml-2.2.jar
+          rm -rf /tmp/mcverify-classes && mkdir -p /tmp/mcverify-classes
+          find src/main/java tools/offline-verify -name '*.java' > /tmp/mcsrc.txt
+          javac -encoding UTF-8 -cp tools/offline-verify/lib/snakeyaml-2.2.jar \
+            -d /tmp/mcverify-classes @/tmp/mcsrc.txt
+          CP=/tmp/mcverify-classes:tools/offline-verify/lib/snakeyaml-2.2.jar
+          java -cp "$CP" verify.VerifyMain
+          java -cp "$CP" verify.IntegrationTest
+          java -cp "$CP" verify.ServerTest
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: McRoastBot
+          path: build/libs/*.jar

@@ -13,3 +13,6 @@ commands:
   optout:
     description: Opt out of McRoastBot roasts.
     usage: /optout
+  mroast:
+    description: McRoastBot admin console command.
+    usage: /mroast <status|aitest|live> [event-type]

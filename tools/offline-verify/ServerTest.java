@@ -102,11 +102,20 @@ public final class ServerTest {
         }
     }
 
+    static class FakeConsole implements org.bukkit.command.CommandSender {
+        final List<String> sent = new ArrayList<>();
+
+        public void sendMessage(String message) {
+            sent.add(message);
+        }
+    }
+
     static class TestPlugin extends McRoastBotPlugin {
         final File dataFolder;
         final FakeServer server = new FakeServer();
         final YamlConfiguration config;
         final FakePluginCommand optoutCmd = new FakePluginCommand();
+        final FakePluginCommand mroastCmd = new FakePluginCommand();
         final Logger logger = Logger.getLogger("McRoastBot-test");
 
         TestPlugin(File dataFolder) {
@@ -140,7 +149,10 @@ public final class ServerTest {
 
         @Override
         public PluginCommand getCommand(String name) {
-            return "optout".equals(name) ? optoutCmd : null;
+            if ("optout".equals(name)) {
+                return optoutCmd;
+            }
+            return "mroast".equals(name) ? mroastCmd : null;
         }
 
         @Override
@@ -192,6 +204,7 @@ public final class ServerTest {
         check(!plugin.server.pm.disabled, "boot-enables");
         check(plugin.server.pm.listeners.size() == 5, "boot-5-listeners");
         check(plugin.optoutCmd.exec != null, "boot-optout-command");
+        check(plugin.mroastCmd.exec != null, "boot-mroast-command");
         check(((InlineScheduler) Bukkit.scheduler).delayedRecorded == 1,
                 "boot-observer-scheduled");
 
@@ -217,6 +230,28 @@ public final class ServerTest {
                 "console-aitest-murder-caps");
         check(op.sent.stream().anyMatch(s -> s.contains("aitest fired (MURDER)")),
                 "console-aitest-ack");
+
+        // /mroast console command: status, non-op silence, console aitest.
+        FakeConsole console = new FakeConsole();
+        plugin.mroastCmd.exec.onCommand(op, new org.bukkit.command.Command(),
+                "mroast", new String[]{"status"});
+        check(op.sent.stream().anyMatch(s -> s.contains("pollinations=free")),
+                "console-mroast-status");
+        int opSent = op.sent.size();
+        IntegrationTest.FakePlayer peon = new IntegrationTest.FakePlayer("Peon", false);
+        plugin.mroastCmd.exec.onCommand(peon, new org.bukkit.command.Command(),
+                "mroast", new String[]{"status"});
+        check(peon.sent.isEmpty() && op.sent.size() == opSent, "console-mroast-nonop");
+        int bc = Bukkit.broadcastLog.size();
+        plugin.mroastCmd.exec.onCommand(console, new org.bukkit.command.Command(),
+                "mroast", new String[]{"aitest", "murder"});
+        check(Bukkit.broadcastLog.size() == bc + 1
+                && Bukkit.broadcastLog.get(bc).toString().contains("TEST ROAST SUPREME"),
+                "console-mroast-aitest");
+        plugin.mroastCmd.exec.onCommand(console, new org.bukkit.command.Command(),
+                "mroast", new String[]{"bogus"});
+        check(console.sent.get(console.sent.size() - 1).contains("Usage:"),
+                "console-mroast-usage");
 
         // Mention with zero working AI path: canned gateway absent here, so the
         // real gateway fails gracefully (no keys that work offline).

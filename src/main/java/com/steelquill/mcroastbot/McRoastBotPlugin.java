@@ -8,6 +8,7 @@ import com.steelquill.mcroastbot.ai.RotationMode;
 import com.steelquill.mcroastbot.chat.ChatDispatcher;
 import com.steelquill.mcroastbot.chat.ChatListener;
 import com.steelquill.mcroastbot.chat.RoastDispatcher;
+import com.steelquill.mcroastbot.commands.MroastCommand;
 import com.steelquill.mcroastbot.commands.OptOutCommand;
 import com.steelquill.mcroastbot.config.BotConfig;
 import com.steelquill.mcroastbot.core.CooldownManager;
@@ -50,6 +51,7 @@ public class McRoastBotPlugin extends JavaPlugin {
     private String botName = "RoastBot";
     private final PromptBuilder.OptOuts optOuts = new PromptBuilder.OptOuts();
     private final RoastDiary diary = new RoastDiary(10);
+    private RoastDispatcher dispatcher;
     private ChatListener chatListener;
 
     @Override
@@ -83,7 +85,7 @@ public class McRoastBotPlugin extends JavaPlugin {
                 new ResponseValidator(cfg.maxChars, 0.8, cfg.blockedPatterns);
         CooldownManager cooldowns = new CooldownManager();
         ChatDispatcher chat = new ChatDispatcher(this, botName);
-        RoastDispatcher dispatcher = new RoastDispatcher(chat, gateway, diary, validator,
+        dispatcher = new RoastDispatcher(chat, gateway, diary, validator,
                 cooldowns, systemTemplate, botName, cfg.perPlayerCooldownMs,
                 cfg.globalCooldownMs, cfg.httpTimeoutSeconds);
 
@@ -103,6 +105,24 @@ public class McRoastBotPlugin extends JavaPlugin {
                 new DeathListener(cfg, bounties, cooldowns, optOuts, dispatcher), this);
         if (getCommand("optout") != null) {
             getCommand("optout").setExecutor(new OptOutCommand(optOuts, this::saveOptOutFile));
+        }
+        if (getCommand("mroast") != null) {
+            getCommand("mroast").setExecutor(new MroastCommand(new MroastCommand.Backend() {
+                @Override
+                public String status() {
+                    return maskedStatus();
+                }
+
+                @Override
+                public BotConfig config() {
+                    return cfg;
+                }
+
+                @Override
+                public RoastDispatcher dispatcher() {
+                    return dispatcher;
+                }
+            }));
         }
         if (cfg.randomEnabled) {
             new RandomObserver(this, cfg, optOuts, dispatcher).start();
@@ -186,16 +206,19 @@ public class McRoastBotPlugin extends JavaPlugin {
 
             @Override
             public String status() {
-                // Masked counts only. Full keys are NEVER shown.
-                StringBuilder sb = new StringBuilder(
-                        "McRoastBot @" + botName + " keys: ");
-                for (String id : providers.keySet()) {
-                    sb.append(id).append('=').append(keyDesc(id)).append(' ');
-                }
-                sb.append("| diary players=").append(diary.playerCount());
-                return sb.toString();
+                return maskedStatus();
             }
         };
+    }
+
+    private String maskedStatus() {
+        // Masked counts only. Full keys are NEVER shown.
+        StringBuilder sb = new StringBuilder("McRoastBot @" + botName + " keys: ");
+        for (String id : providers.keySet()) {
+            sb.append(id).append('=').append(keyDesc(id)).append(' ');
+        }
+        sb.append("| diary players=").append(diary.playerCount());
+        return sb.toString();
     }
 
     private String keyDesc(String providerId) {
