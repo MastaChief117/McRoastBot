@@ -28,6 +28,23 @@ jobs:
           ls build/libs/*.jar
           echo "Build artifact present, continuing."
 
+      - name: Probe Pollinations endpoint shapes
+        run: |
+          echo "--- GET /models ---"
+          curl -s -o /tmp/m.txt -w "%{http_code}\n" "https://text.pollinations.ai/models"; head -c 200 /tmp/m.txt; echo
+          echo "--- POST /openai ---"
+          curl -s -o /tmp/o.txt -w "%{http_code}\n" -X POST "https://text.pollinations.ai/openai" \
+            -H "Content-Type: application/json" \
+            -d '{"model":"openai","messages":[{"role":"user","content":"Reply with exactly: BEANS"}],"max_tokens":20}'; head -c 300 /tmp/o.txt; echo
+          echo "--- POST /openai/chat/completions ---"
+          curl -s -o /tmp/oc.txt -w "%{http_code}\n" -X POST "https://text.pollinations.ai/openai/chat/completions" \
+            -H "Content-Type: application/json" \
+            -d '{"model":"openai","messages":[{"role":"user","content":"Reply with exactly: BEANS"}],"max_tokens":20}'; head -c 300 /tmp/oc.txt; echo
+          echo "--- POST /v1/chat/completions ---"
+          curl -s -o /tmp/v1.txt -w "%{http_code}\n" -X POST "https://text.pollinations.ai/v1/chat/completions" \
+            -H "Content-Type: application/json" \
+            -d '{"model":"openai","messages":[{"role":"user","content":"Reply with exactly: BEANS"}],"max_tokens":20}'; head -c 300 /tmp/v1.txt; echo
+
       - name: Download Paper-fork server jar (proven GitHub release)
         run: |
           set -e
