@@ -37,7 +37,8 @@ jobs:
         run: |
           set -e
           mkdir -p live/plugins
-          cp build/libs/McRoastBot-*.jar live/plugins/
+          cp build/libs/*.jar live/plugins/
+          ls live/plugins/
           cd live
           echo "eula=true" > eula.txt
           printf 'online-mode=false\nmotd=McRoastBot CI\nmax-players=5\n' > server.properties
