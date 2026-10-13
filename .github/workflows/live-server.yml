@@ -22,16 +22,20 @@ jobs:
       - name: Build plugin
         run: gradle build
 
-      - name: Download Paper 1.21.4
+      - name: Download Paper 1.21.x
         run: |
           set -e
-          VER=1.21.4
-          BUILD=$(curl -s "https://fill.papermc.io/v3/projects/paper/versions/$VER/builds" \
+          VER=$(curl -sL https://fill.papermc.io/v3/projects/paper/versions \
+            | jq -r '.[] | select(startswith("1.21"))' | sort -V | tail -1)
+          echo "Version: $VER"
+          BUILD=$(curl -sL "https://fill.papermc.io/v3/projects/paper/versions/$VER/builds" \
             | jq -r '.[-1].id')
-          echo "Paper $VER build $BUILD"
-          curl -sL -o paper.jar \
+          echo "Build: $BUILD"
+          curl -fSL -o paper.jar \
             "https://fill.papermc.io/v3/projects/paper/versions/$VER/builds/$BUILD/downloads/paper-$VER-$BUILD.jar"
-          ls -la paper.jar
+          SIZE=$(stat -c%s paper.jar)
+          echo "paper.jar bytes: $SIZE"
+          [ "$SIZE" -gt 10000000 ] || (echo "download looks wrong"; exit 1)
 
       - name: Set up server
         run: |
@@ -50,29 +54,30 @@ jobs:
         run: |
           set -e
           cd live
-          mkfifo server.in
-          java -Xmx2G -jar paper.jar --nogui < server.in > server.log 2>&1 &
+          # Regular file + tail pipe: no FIFO deadlock, console stays writable.
+          touch cmds.txt
+          tail -n +1 -F cmds.txt 2>/dev/null | java -Xmx2G -jar paper.jar --nogui > server.log 2>&1 &
           echo $! > server.pid
           for i in $(seq 1 60); do
-            grep -q "Done (" server.log && break
+            grep -q "Done (" server.log 2>/dev/null && break
             sleep 5
           done
           grep -q "Done (" server.log || (tail -30 server.log; exit 1)
           grep -q "McRoastBot enabled" server.log || (tail -30 server.log; exit 1)
           echo "--- plugin enabled, running console checks ---"
-          echo "mroast status" > server.in
+          echo "mroast status" >> cmds.txt
           sleep 5
           grep -q "pollinations=free" server.log
-          echo "mroast aitest murder" > server.in
+          echo "mroast aitest murder" >> cmds.txt
           sleep 10
           grep -iq "CI ROAST SUPREME" server.log
           echo "--- pipeline proven, trying live Pollinations AI (non-fatal) ---"
-          echo "mroast live mention" > server.in
+          echo "mroast live mention" >> cmds.txt
           sleep 60
           grep -q "McRoastBot AI failed" server.log \
             && echo "LIVE AI: request failed gracefully (see log)" \
             || echo "LIVE AI: got a response or still pending (see log)"
-          echo "stop" > server.in
+          echo "stop" >> cmds.txt
           sleep 20
           kill -9 "$(cat server.pid)" 2>/dev/null || true
           echo "=== relevant log lines ==="
