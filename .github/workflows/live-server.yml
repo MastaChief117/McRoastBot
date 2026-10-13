@@ -22,23 +22,19 @@ jobs:
       - name: Build plugin
         run: gradle build
 
-      - name: Probe Paper download API shapes
-        run: |
-          echo "--- v3 builds shape ---"
-          curl -sL "https://fill.papermc.io/v3/projects/paper/versions/1.21.4/builds" | head -c 400; echo
-
       - name: Download Paper 1.21.x
         run: |
           set -e
           API=https://fill.papermc.io/v3/projects/paper
-          VER=$(curl -sL "$API/versions" | jq -r '.versions[].version.id | select(startswith("1.21"))' \
+          VER=$(curl -sL "$API/versions" \
+            | jq -r '.versions[] | select(.version.id | startswith("1.21")) | select(.version.id | contains("-") | not) | .version.id' \
             | sort -V | tail -1)
-          [ -n "$VER" ] && [ "$VER" != "null" ] || VER=1.21.4
           echo "Version: $VER"
-          BUILD=$(curl -sL "$API/versions/$VER/builds" | jq -r '.builds[-1].id')
-          echo "Build: $BUILD"
-          curl -fSL -o paper.jar \
-            "$API/versions/$VER/builds/$BUILD/downloads/paper-$VER-$BUILD.jar"
+          JSON=$(curl -sL "$API/versions/$VER/builds")
+          BUILD=$(echo "$JSON" | jq -r '[.[] | select(.channel=="STABLE")] | last | .id')
+          NAME=$(echo "$JSON" | jq -r '[.[] | select(.channel=="STABLE")] | last | .downloads | keys[0]')
+          echo "Build: $BUILD File: $NAME"
+          curl -fSL -o paper.jar "$API/versions/$VER/builds/$BUILD/downloads/$NAME"
           SIZE=$(stat -c%s paper.jar)
           echo "paper.jar bytes: $SIZE"
           [ "$SIZE" -gt 10000000 ] || (echo "download looks wrong"; exit 1)
