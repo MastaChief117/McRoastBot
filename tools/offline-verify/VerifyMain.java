@@ -181,6 +181,10 @@ public final class VerifyMain {
                 && com.steelquill.mcroastbot.ai.AiGateway.errorHint("  a\nb  ")
                         .equals(" :: a b"),
                 "gateway-error-hint");
+        check(com.steelquill.mcroastbot.ai.AiGateway
+                        .isUnknownModel("{\"error\":\"Model not found: xyz\"}")
+                && !com.steelquill.mcroastbot.ai.AiGateway.isUnknownModel("<html>nope</html>"),
+                "gateway-unknown-model");
 
         System.out.println("\nPASS=" + pass + " FAIL=" + fail);
         if (fail > 0) {

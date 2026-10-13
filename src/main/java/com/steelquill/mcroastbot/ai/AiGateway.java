@@ -91,6 +91,11 @@ public class AiGateway {
                             .build();
                     HttpResponse<String> res = http.send(req, HttpResponse.BodyHandlers.ofString());
                     String hint = errorHint(res.body());
+                    if (res.statusCode() == 404 && isUnknownModel(res.body())) {
+                        // Wrong model name for this provider: try the next one.
+                        lastError = "unknown-model:" + providerId + hint;
+                        continue;
+                    }
                     switch (ChatPayload.classify(res.statusCode())) {
                         case OK -> {
                             String text = ChatPayload.extractContent(res.body());
@@ -162,5 +167,10 @@ public class AiGateway {
         }
         String oneLine = body.replaceAll("\\s+", " ").strip();
         return " :: " + oneLine.substring(0, Math.min(160, oneLine.length()));
+    }
+
+    /** 404 that complains about the model name: rotate, don't hard-fail. */
+    public static boolean isUnknownModel(String body) {
+        return body != null && body.toLowerCase(java.util.Locale.ROOT).contains("model");
     }
 }
