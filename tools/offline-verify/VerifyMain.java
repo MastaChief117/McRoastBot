@@ -177,6 +177,10 @@ public final class VerifyMain {
         String keylessMsg = ChatListener.doAddKey(ks, provs, "pollinations", "whatever");
         check(keylessMsg.contains("needs no key") && ks.enabledCount("pollinations") == 0,
                 "pollinations-no-key-stored");
+        check(com.steelquill.mcroastbot.ai.AiGateway.errorHint(null).isEmpty()
+                && com.steelquill.mcroastbot.ai.AiGateway.errorHint("  a\nb  ")
+                        .equals(" :: a b"),
+                "gateway-error-hint");
 
         System.out.println("\nPASS=" + pass + " FAIL=" + fail);
         if (fail > 0) {

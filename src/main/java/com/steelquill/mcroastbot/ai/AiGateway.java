@@ -81,7 +81,8 @@ public class AiGateway {
                     HttpRequest.Builder builder = HttpRequest.newBuilder()
                             .uri(URI.create(p.completionsUrl()))
                             .timeout(Duration.ofSeconds(Math.max(5, timeoutSeconds)))
-                            .header("Content-Type", "application/json");
+                            .header("Content-Type", "application/json")
+                            .header("User-Agent", "McRoastBot/0.1.0");
                     if (raw != null) {
                         builder.header("Authorization", "Bearer " + raw);
                     }
@@ -89,11 +90,12 @@ public class AiGateway {
                                     ChatPayload.buildRequest(model, system, user, temperature, maxTokens)))
                             .build();
                     HttpResponse<String> res = http.send(req, HttpResponse.BodyHandlers.ofString());
+                    String hint = errorHint(res.body());
                     switch (ChatPayload.classify(res.statusCode())) {
                         case OK -> {
                             String text = ChatPayload.extractContent(res.body());
                             if (text == null || text.isBlank()) {
-                                lastError = "empty-response:" + providerId;
+                                lastError = "empty-response:" + providerId + hint;
                             } else {
                                 return new CompletionResult(true, text, providerId, false, "");
                             }
@@ -102,16 +104,16 @@ public class AiGateway {
                             if (e != null) {
                                 keys.markInvalid(e.id());
                             }
-                            lastError = "invalid-key:" + providerId;
+                            lastError = "invalid-key:" + providerId + hint;
                         }
                         case ROTATE_NEXT -> {
                             if (e != null) {
                                 keys.markTransientFailure(e.id());
                             }
-                            lastError = "transient:" + providerId + ":" + res.statusCode();
+                            lastError = "transient:" + providerId + ":" + res.statusCode() + hint;
                         }
                         case FATAL -> {
-                            lastError = "fatal:" + providerId + ":" + res.statusCode();
+                            lastError = "fatal:" + providerId + ":" + res.statusCode() + hint;
                             return new CompletionResult(false, "", providerId, false, lastError);
                         }
                     }
@@ -151,5 +153,14 @@ public class AiGateway {
         }
         keyless.addAll(keyed);
         return keyless;
+    }
+
+    /** First 160 chars of an error body, single line. Never contains keys. */
+    public static String errorHint(String body) {
+        if (body == null || body.isBlank()) {
+            return "";
+        }
+        String oneLine = body.replaceAll("\\s+", " ").strip();
+        return " :: " + oneLine.substring(0, Math.min(160, oneLine.length()));
     }
 }
