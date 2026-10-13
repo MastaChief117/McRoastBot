@@ -253,12 +253,14 @@ public final class ServerTest {
         check(console.sent.get(console.sent.size() - 1).contains("Usage:"),
                 "console-mroast-usage");
 
-        // Mention with zero working AI path: canned gateway absent here, so the
-        // real gateway fails gracefully (no keys that work offline).
+        // Mention goes through the REAL gateway: offline it fails gracefully
+        // with no broadcast; where AI is reachable a real roast may arrive.
+        // Either way: no crash, no spam burst.
         PlainTextComponentSerializer.next = "@RoastBot hello";
         int before = Bukkit.broadcastLog.size();
         chat.onChat(new IntegrationTest.FakeChat(guest));
-        check(Bukkit.broadcastLog.size() == before, "console-mention-no-crash-no-spam");
+        int after = Bukkit.broadcastLog.size();
+        check(after == before || after == before + 1, "console-mention-no-crash-no-spam");
 
         // Opt-out persists across reboot; diary + keys + name too.
         PlainTextComponentSerializer.next = "!optout";
