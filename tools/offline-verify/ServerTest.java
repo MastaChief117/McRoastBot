@@ -193,7 +193,7 @@ public final class ServerTest {
         data.mkdirs();
         // Test config = real config.yml + test-mode canned reply enabled.
         String real = Files.readString(
-                new File("/root/mcroastbot/src/main/resources/config.yml").toPath());
+                new File("src/main/resources/config.yml").toPath());
         Files.writeString(new File(data, "config.yml").toPath(),
                 real.replace("debug-canned-reply: \"\"",
                         "debug-canned-reply: \"test roast supreme\""));
