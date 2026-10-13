@@ -22,6 +22,12 @@ jobs:
       - name: Build plugin
         run: gradle build
 
+      - name: Fail fast if the build produced no jar
+        run: |
+          set -e
+          ls build/libs/*.jar
+          echo "Build artifact present, continuing."
+
       - name: Download Paper 1.21.x
         run: |
           set -e
@@ -32,7 +38,7 @@ jobs:
           echo "Version: $VER"
           JSON=$(curl -sL "$API/versions/$VER/builds")
           BUILD=$(echo "$JSON" | jq -r '[.[] | select(.channel=="STABLE")] | last | .id')
-          NAME=$(echo "$JSON" | jq -r '[.[] | select(.channel=="STABLE")] | last | .downloads | keys[0]')
+          NAME=$(echo "$JSON" | jq -r '[.[] | select(.channel=="STABLE")] | last | .downloads | (.["server:default"].name // keys[0])')
           echo "Build: $BUILD File: $NAME"
           curl -fSL -o paper.jar "$API/versions/$VER/builds/$BUILD/downloads/$NAME"
           SIZE=$(stat -c%s paper.jar)
