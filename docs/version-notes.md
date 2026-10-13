@@ -2,7 +2,9 @@
 
 ## Target: Paper 1.21.x, Java 21
 
-- `api-version: '1.21'` in `paper-plugin.yml`; dependency
+- `api-version: '1.21'` in legacy `plugin.yml` (NOT paper-plugin.yml: Paper
+  throws on `getCommand()` for YAML-declared commands there - proven by a
+  live 1.21.8 boot); dependency
   `io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT` (see `gradle.properties`).
 - Before building on the Lightning box, check https://papermc.io/downloads/paper
   for the newest 1.21.x build and bump `paperApiVersion` if needed.
@@ -35,7 +37,7 @@ One jar cannot natively speak every protocol version. The compatibility story is
 | `Bukkit.broadcast(Component)` (Adventure, cyan) | verified in source |
 | `Material.TNT/OAK_BOAT/ARMOR_STAND`, `EntityType` cute set, `Ageable.isAdult()` | verified present |
 | `World.getNearbyEntities(Location,double,double,double)`, `Block.getBiome()`, `World.Environment` | verified in source |
-| `paper-plugin.yml` legacy keys (`softdepend`, `commands`, `load: POSTWORLD`) | per Paper `PluginMeta` docs |
+| `plugin.yml` legacy keys (`softdepend`, `commands`, `load: POSTWORLD`) | live-boot verified |
 | `PlayerTeleportEvent.getTo()`, `PlayerDeathEvent.getEntity()->Player`, scheduler, `YamlConfiguration` | long-stable, not re-verified |
 
 ## Deliberately NOT used in MVP

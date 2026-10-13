@@ -3,6 +3,9 @@ version: '${pluginVersion}'
 main: com.steelquill.mcroastbot.McRoastBotPlugin
 api-version: '1.21'
 load: POSTWORLD
+# NOTE: legacy plugin.yml (not paper-plugin.yml) is intentional. Paper throws
+# on getCommand() for YAML-declared commands in paper-plugin.yml; plugin.yml
+# keeps getCommand().setExecutor() working.
 description: Chat-only AI roast bot. Deterministic detectors decide what is interesting; AI only roasts.
 author: SteelQuill
 website: https://github.com/MastaChief117
