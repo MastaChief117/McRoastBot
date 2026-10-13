@@ -26,10 +26,10 @@ jobs:
         run: |
           set -e
           VER=$(curl -sL https://fill.papermc.io/v3/projects/paper/versions \
-            | jq -r '.[] | select(startswith("1.21"))' | sort -V | tail -1)
+            | jq -r '.versions[] | select(startswith("1.21"))' | sort -V | tail -1)
           echo "Version: $VER"
           BUILD=$(curl -sL "https://fill.papermc.io/v3/projects/paper/versions/$VER/builds" \
-            | jq -r '.[-1].id')
+            | jq -r '.builds[-1].id')
           echo "Build: $BUILD"
           curl -fSL -o paper.jar \
             "https://fill.papermc.io/v3/projects/paper/versions/$VER/builds/$BUILD/downloads/paper-$VER-$BUILD.jar"
