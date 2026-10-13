@@ -61,7 +61,7 @@ jobs:
           echo "eula=true" > eula.txt
           printf 'online-mode=false\nmotd=McRoastBot CI\nmax-players=5\n' > server.properties
           # Full shipped config + canned test reply (append, never overwrite).
-          cp src/main/resources/config.yml plugins/McRoastBot/config.yml
+          cp ../src/main/resources/config.yml plugins/McRoastBot/config.yml
           printf '\ndebug-canned-reply: "ci roast supreme"\n' >> plugins/McRoastBot/config.yml
 
       - name: Boot and drive via console
