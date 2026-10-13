@@ -24,20 +24,18 @@ jobs:
 
       - name: Probe Paper download API shapes
         run: |
-          echo "--- v3 versions ---"
-          curl -sL "https://fill.papermc.io/v3/projects/paper/versions" | head -c 500; echo
-          echo "--- v2 project ---"
-          curl -sL "https://api.papermc.io/v2/projects/paper" | head -c 500; echo
+          echo "--- v3 builds shape ---"
+          curl -sL "https://fill.papermc.io/v3/projects/paper/versions/1.21.4/builds" | head -c 400; echo
 
       - name: Download Paper 1.21.x
         run: |
           set -e
-          API=https://api.papermc.io/v2/projects/paper
-          VER=$(curl -sL "$API" | jq -r '.versions[] | select(startswith("1.21"))' \
+          API=https://fill.papermc.io/v3/projects/paper
+          VER=$(curl -sL "$API/versions" | jq -r '.versions[].version.id | select(startswith("1.21"))' \
             | sort -V | tail -1)
           [ -n "$VER" ] && [ "$VER" != "null" ] || VER=1.21.4
           echo "Version: $VER"
-          BUILD=$(curl -sL "$API/versions/$VER/builds" | jq -r '.builds[-1].build')
+          BUILD=$(curl -sL "$API/versions/$VER/builds" | jq -r '.builds[-1].id')
           echo "Build: $BUILD"
           curl -fSL -o paper.jar \
             "$API/versions/$VER/builds/$BUILD/downloads/paper-$VER-$BUILD.jar"
