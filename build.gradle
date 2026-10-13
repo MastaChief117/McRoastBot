@@ -18,6 +18,7 @@ repositories {
         url = 'https://repo.papermc.io/repository/maven-public/'
         content {
             includeGroup 'io.papermc.paper'
+            includeGroup 'net.md-5'
         }
     }
     // Paper-API transitives that are NOT on Maven Central.
