@@ -158,7 +158,7 @@ public final class ServerTest {
         @Override
         public InputStream getResource(String name) {
             try {
-                return new FileInputStream(new File("/root/mcroastbot/src/main/resources/" + name));
+                return new FileInputStream(new File("src/main/resources/" + name));
             } catch (Exception e) {
                 return null;
             }
@@ -181,7 +181,7 @@ public final class ServerTest {
 
         // Shipped config conformance: free provider first, correct default model.
         YamlConfiguration shipped = YamlConfiguration.loadConfiguration(
-                new File("/root/mcroastbot/src/main/resources/config.yml"));
+                new File("src/main/resources/config.yml"));
         check(shipped.getStringList("providers-preferred-order").get(0).equals("pollinations"),
                 "config-pollinations-first");
         check(shipped.getConfigurationSection("bot.provider-models") != null
