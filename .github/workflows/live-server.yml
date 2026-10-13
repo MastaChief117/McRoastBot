@@ -79,9 +79,13 @@ jobs:
           echo "--- pipeline proven, trying live Pollinations AI (non-fatal) ---"
           echo "mroast live mention" >> cmds.txt
           sleep 60
-          grep -q "McRoastBot AI failed" server.log \
-            && echo "LIVE AI: request failed gracefully (see log)" \
-            || echo "LIVE AI: got a response or still pending (see log)"
+          ROASTS=$(grep -c "<RoastBot>" server.log || true)
+          if [ "$ROASTS" -gt 1 ]; then
+            echo "LIVE AI: real roast received"
+          else
+            echo "LIVE AI: no live roast (rate-limit?) - pipeline already proven by aitest"
+            grep -q "McRoastBot AI failed" server.log && echo "(failure was graceful)"
+          fi
           echo "stop" >> cmds.txt
           sleep 20
           kill -9 "$(cat server.pid)" 2>/dev/null || true

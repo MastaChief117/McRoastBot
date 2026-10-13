@@ -59,11 +59,10 @@ public class AiGateway {
             }
             // Keyless providers (Pollinations free tier) always get one attempt.
             for (int k = 0; k < Math.max(1, keys.enabledCount(providerId)); k++) {
-                if (attempts >= maxAttempts) {
-                    return new CompletionResult(false, "", "", true, lastError);
-                }
-                attempts++;
                 KeyStore.Entry e = keys.next(providerId);
+                if (e == null && !p.keyless()) {
+                    break; // No keys and not keyless: skip provider, spend no attempt.
+                }
                 String raw = null;
                 if (e != null) {
                     try {
@@ -72,9 +71,11 @@ public class AiGateway {
                         lastError = "decrypt-failed:" + providerId;
                         continue;
                     }
-                } else if (!p.keyless()) {
-                    break; // No keys and not keyless: skip provider.
                 }
+                if (attempts >= maxAttempts) {
+                    return new CompletionResult(false, "", "", true, lastError);
+                }
+                attempts++;
                 String model = providerModels.getOrDefault(providerId, defaultModel);
                 try {
                     HttpRequest.Builder builder = HttpRequest.newBuilder()
@@ -126,21 +127,29 @@ public class AiGateway {
     }
 
     private List<String> providerOrder() {
+        List<String> base;
         if (mode == RotationMode.FAILOVER_PREFERRED && !preferredOrder.isEmpty()) {
-            List<String> order = new ArrayList<>(preferredOrder);
+            base = new ArrayList<>(preferredOrder);
             for (String id : providers.keySet()) {
-                if (!order.contains(id)) {
-                    order.add(id);
+                if (!base.contains(id)) {
+                    base.add(id);
                 }
             }
-            return order;
+        } else {
+            base = new ArrayList<>(providers.keySet());
         }
-        List<String> order = new ArrayList<>(providers.keySet());
-        if (!order.isEmpty()) {
-            // Rotate starting provider for ROUND_ROBIN fairness.
-            String first = order.remove(0);
-            order.add(first);
+        // Keyless providers (free, no setup) always go first.
+        List<String> keyless = new ArrayList<>();
+        List<String> keyed = new ArrayList<>();
+        for (String id : base) {
+            AiProvider p = providers.get(id);
+            if (p != null && p.keyless() && p.openAiCompatible()) {
+                keyless.add(id);
+            } else {
+                keyed.add(id);
+            }
         }
-        return order;
+        keyless.addAll(keyed);
+        return keyless;
     }
 }
