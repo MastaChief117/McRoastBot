@@ -40,7 +40,7 @@ public final class BotConfig {
         model = c.getString("bot.model", "gpt-4o-mini");
         temperature = c.getDouble("bot.temperature", 0.9);
         maxTokens = c.getInt("bot.max-tokens", 120);
-        httpTimeoutSeconds = c.getInt("bot.http-timeout-seconds", 20);
+        httpTimeoutSeconds = c.getInt("bot.http-timeout-seconds", 60);
         providerModels = new HashMap<>();
         if (c.isConfigurationSection("bot.provider-models")) {
             for (String k : c.getConfigurationSection("bot.provider-models").getKeys(false)) {

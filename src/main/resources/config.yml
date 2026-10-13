@@ -7,10 +7,11 @@ bot:
   model: gpt-4o-mini
   temperature: 0.9
   max-tokens: 120
-  http-timeout-seconds: 20
+  http-timeout-seconds: 60
   # Optional per-provider model override, e.g. { nvidia: "meta/llama-3.1-70b-instruct" }
-  # Pollinations default model is its "openai" router.
-  provider-models: {pollinations: openai}
+  # Pollinations default is the fast anonymous-tier model (the "openai"
+  # router is a slow reasoning model and blows chat timeouts).
+  provider-models: {pollinations: openai-fast}
 
 # Preferred provider order for FAILOVER_PREFERRED mode.
 # Pollinations is free and keyless, so it leads by default.

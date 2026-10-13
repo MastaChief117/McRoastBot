@@ -185,7 +185,7 @@ public final class ServerTest {
         check(shipped.getStringList("providers-preferred-order").get(0).equals("pollinations"),
                 "config-pollinations-first");
         check(shipped.getConfigurationSection("bot.provider-models") != null
-                && "openai".equals(shipped.getString("bot.provider-models.pollinations", "")),
+                && "openai-fast".equals(shipped.getString("bot.provider-models.pollinations", "")),
                 "config-pollinations-model");
 
         File data = new File("/tmp/mcplugin-test");

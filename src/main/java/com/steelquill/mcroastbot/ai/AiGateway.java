@@ -126,7 +126,8 @@ public class AiGateway {
                     if (e != null) {
                         keys.markTransientFailure(e.id());
                     }
-                    lastError = "io-error:" + providerId;
+                    lastError = "io-error:" + providerId + ":"
+                            + ex.getClass().getSimpleName();
                 }
             }
         }

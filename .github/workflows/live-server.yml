@@ -88,7 +88,7 @@ jobs:
           grep -iq "CI ROAST SUPREME" server.log
           echo "--- pipeline proven, trying live Pollinations AI (non-fatal) ---"
           echo "mroast live mention" >> cmds.txt
-          sleep 60
+          sleep 100
           ROASTS=$(grep -c "<RoastBot>" server.log || true)
           if [ "$ROASTS" -gt 1 ]; then
             echo "LIVE AI: real roast received"
