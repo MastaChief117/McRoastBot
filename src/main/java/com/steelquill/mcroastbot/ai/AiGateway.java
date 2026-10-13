@@ -1,0 +1,136 @@
+package com.steelquill.mcroastbot.ai;
+
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * OpenAI-compatible gateway client with key rotation + provider failover.
+ * Network only happens here. Call from async threads, never the main thread.
+ */
+public final class AiGateway {
+    public record CompletionResult(boolean ok, String text, String providerId,
+                                   boolean retryable, String error) {
+    }
+
+    private final HttpClient http;
+    private final KeyStore keys;
+    private final Map<String, AiProvider> providers;
+    private final Map<String, String> providerModels;
+    private final String defaultModel;
+    private final double temperature;
+    private final int maxTokens;
+    private final int maxAttempts;
+    private final RotationMode mode;
+    private final List<String> preferredOrder;
+
+    public AiGateway(KeyStore keys, Map<String, AiProvider> providers,
+                     Map<String, String> providerModels, String defaultModel,
+                     double temperature, int maxTokens, int maxAttempts,
+                     RotationMode mode, List<String> preferredOrder, int timeoutSeconds) {
+        this.keys = keys;
+        this.providers = providers;
+        this.providerModels = providerModels;
+        this.defaultModel = defaultModel;
+        this.temperature = temperature;
+        this.maxTokens = maxTokens;
+        this.maxAttempts = Math.max(1, maxAttempts);
+        this.mode = mode;
+        this.preferredOrder = List.copyOf(preferredOrder);
+        this.http = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(Math.max(5, timeoutSeconds)))
+                .build();
+    }
+
+    public CompletionResult complete(String system, String user, int timeoutSeconds) {
+        List<String> order = providerOrder();
+        int attempts = 0;
+        String lastError = "no keys configured";
+        for (String providerId : order) {
+            AiProvider p = providers.get(providerId);
+            if (p == null || !p.openAiCompatible()) {
+                continue;
+            }
+            // Try each key of this provider once per pass.
+            for (int k = 0; k < Math.max(1, keys.enabledCount(providerId)); k++) {
+                if (attempts >= maxAttempts) {
+                    return new CompletionResult(false, "", "", true, lastError);
+                }
+                attempts++;
+                KeyStore.Entry e = keys.next(providerId);
+                if (e == null) {
+                    break;
+                }
+                String raw;
+                try {
+                    raw = keys.decrypt(e);
+                } catch (Exception ex) {
+                    lastError = "decrypt-failed:" + providerId;
+                    continue;
+                }
+                String model = providerModels.getOrDefault(providerId, defaultModel);
+                try {
+                    HttpRequest req = HttpRequest.newBuilder()
+                            .uri(URI.create(p.completionsUrl()))
+                            .timeout(Duration.ofSeconds(Math.max(5, timeoutSeconds)))
+                            .header("Content-Type", "application/json")
+                            .header("Authorization", "Bearer " + raw)
+                            .POST(HttpRequest.BodyPublishers.ofString(
+                                    ChatPayload.buildRequest(model, system, user, temperature, maxTokens)))
+                            .build();
+                    HttpResponse<String> res = http.send(req, HttpResponse.BodyHandlers.ofString());
+                    switch (ChatPayload.classify(res.statusCode())) {
+                        case OK -> {
+                            String text = ChatPayload.extractContent(res.body());
+                            if (text == null || text.isBlank()) {
+                                lastError = "empty-response:" + providerId;
+                            } else {
+                                return new CompletionResult(true, text, providerId, false, "");
+                            }
+                        }
+                        case DISABLE_KEY -> {
+                            keys.markInvalid(e.id());
+                            lastError = "invalid-key:" + providerId;
+                        }
+                        case ROTATE_NEXT -> {
+                            keys.markTransientFailure(e.id());
+                            lastError = "transient:" + providerId + ":" + res.statusCode();
+                        }
+                        case FATAL -> {
+                            lastError = "fatal:" + providerId + ":" + res.statusCode();
+                            return new CompletionResult(false, "", providerId, false, lastError);
+                        }
+                    }
+                } catch (Exception ex) {
+                    keys.markTransientFailure(e.id());
+                    lastError = "io-error:" + providerId;
+                }
+            }
+        }
+        return new CompletionResult(false, "", "", true, lastError);
+    }
+
+    private List<String> providerOrder() {
+        if (mode == RotationMode.FAILOVER_PREFERRED && !preferredOrder.isEmpty()) {
+            List<String> order = new ArrayList<>(preferredOrder);
+            for (String id : providers.keySet()) {
+                if (!order.contains(id)) {
+                    order.add(id);
+                }
+            }
+            return order;
+        }
+        List<String> order = new ArrayList<>(providers.keySet());
+        if (!order.isEmpty()) {
+            // Rotate starting provider for ROUND_ROBIN fairness.
+            String first = order.remove(0);
+            order.add(first);
+        }
+        return order;
+    }
+}

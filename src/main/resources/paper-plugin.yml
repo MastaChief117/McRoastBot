@@ -1,0 +1,15 @@
+name: McRoastBot
+version: '${pluginVersion}'
+main: com.steelquill.mcroastbot.McRoastBotPlugin
+api-version: '1.21'
+load: POSTWORLD
+description: Chat-only AI roast bot. Deterministic detectors decide what is interesting; AI only roasts.
+author: SteelQuill
+website: https://github.com/MastaChief117
+# Soft-depends only extend client compatibility (old clients via Via, Bedrock via
+# Geyser). The plugin loads and works without any of them installed.
+softdepend: [ViaVersion, ViaBackwards, Geyser-Spigot, floodgate]
+commands:
+  optout:
+    description: Opt out of McRoastBot roasts.
+    usage: /optout

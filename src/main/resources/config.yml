@@ -1,0 +1,46 @@
+# McRoastBot configuration. All cooldowns in seconds unless noted.
+bot:
+  name: RoastBot
+  chat-color: AQUA
+  max-chars: 200
+  # Global default model string passed to providers. Per-provider override below.
+  model: gpt-4o-mini
+  temperature: 0.9
+  max-tokens: 120
+  http-timeout-seconds: 20
+  # Optional per-provider model override, e.g. { nvidia: "meta/llama-3.1-70b-instruct" }
+  provider-models: {}
+
+# Preferred provider order for FAILOVER_PREFERRED mode.
+providers-preferred-order: [keyparty, groq, nvidia, gemini, deepseek, openai, together, openrouter, fireworks, mistral]
+
+key-rotation: ROUND_ROBIN # ROUND_ROBIN | FAILOVER_PREFERRED
+key-max-attempts: 4
+
+thresholds:
+  window-minutes: 10
+  tnt-craft: 5
+  boat-craft: 10
+  armor-stand-craft: 12
+  villager-kills: 3
+  cute-mob-kills: 3
+
+cooldowns:
+  per-player-seconds: 120
+  global-seconds: 45
+  event-seconds: 60
+  milk-brb-seconds: 90
+
+random-observer:
+  enabled: true
+  interval-seconds: 180
+  jitter-seconds: 120
+
+bounty-amount: 10000
+
+# Biomes that trigger a DIMENSION roast when entered (lowercase biome keys).
+rare-biomes: [mushroom_fields, deep_dark, cherry_grove, pale_garden, the_void, soul_sand_valley]
+
+# Extra blocked regexes (case-insensitive) on top of built-ins. Full keys, links
+# and self-harm encouragement are always blocked and can never be allow-listed.
+blocked-patterns: []

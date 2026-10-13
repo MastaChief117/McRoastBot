@@ -1,0 +1,40 @@
+plugins {
+    id 'java'
+}
+
+group = 'com.steelquill'
+version = project.property('pluginVersion')
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'papermc'
+        url = 'https://repo.papermc.io/repository/maven-public/'
+        content {
+            includeGroup 'io.papermc.paper'
+        }
+    }
+}
+
+dependencies {
+    compileOnly "io.papermc.paper:paper-api:${project.property('paperApiVersion')}"
+}
+
+// Zero runtime dependencies: only JDK (HttpClient, AES-GCM) + Paper API.
+// No shadow plugin needed. Keep it that way so the jar stays tiny.
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+}
+
+processResources {
+    filesMatching('paper-plugin.yml') {
+        expand('pluginVersion': project.version)
+    }
+}
